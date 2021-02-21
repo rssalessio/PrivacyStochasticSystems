@@ -24,6 +24,10 @@ If you have Conda installed you may install the required packages using the comm
 
 Check the notebook files. If possible, use the MOSEK solver. Alternatively, one can use ECOS (which is included in cvxpy). That may require some fine-tuning.
 
+- [Linear system - full information](https://github.com/rssalessio/PrivacyStochasticSystems/blob/main/linear_system_full_information_case.ipynb)
+- [Linear system - limited information](https://github.com/rssalessio/PrivacyStochasticSystems/blob/main/linear_system_limited_information_case.ipynb)
+- [MDP with 3 states](https://github.com/rssalessio/PrivacyStochasticSystems/blob/main/mdp_example.ipynb)
+
 ## Citations
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
