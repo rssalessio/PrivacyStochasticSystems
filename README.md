@@ -22,7 +22,7 @@ If you have Conda installed you may install the required packages using the comm
 
 ## Usage/Examples
 
-Check the notebook files
+Check the notebook files. If possible, use the MOSEK solver. Alternatively, one can use ECOS (which is included in cvxpy). That may require some fine-tuning.
 
 ## Citations
 
