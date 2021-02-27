@@ -122,3 +122,62 @@ def compute_KL_divergence_models(P0: np.ndarray, P1: np.ndarray) -> np.ndarray:
                 P0[a, s, :])
 
     return I
+
+
+def compute_stationary_distribution(
+        P: np.ndarray, pi: np.ndarray) -> (np.ndarray, np.ndarray):
+    """ Computes stationary distribution given the transition density matrix
+        and the policy.
+    Parameters
+    ----------
+    P : np.ndarray
+        Numpy matrix containing the transition probabilities for the model
+        The matrix should have dimensions |actions|x|states|x|states|
+    pi : np.ndarray
+        Numpy matrix of dimensions |states|x|actions| containing the
+        policy probabilities
+
+    Returns
+    -------
+    xi : np.ndarray
+        Stationary state-action distribution
+    mu : np.ndarray
+        Stationary state distribution
+    """
+    P, _ = sanity_check_probabilities(P, P)
+    na, ns = P.shape[0], P.shape[1]
+    P_pi = build_markov_transition_density(P, pi)
+
+    _, u = np.linalg.eig(P_pi)
+    # 0 should be the index of the eigenvalue 1
+    mu = np.abs(u[:, 0]) / np.sum(np.abs(u[:, 0]))
+    xi = np.zeros((ns, na))
+
+    for s in range(ns):
+        xi[s, :] = pi[s, :] * mu[s]
+    return xi, mu
+
+
+def build_markov_transition_density(P: np.ndarray, pi: np.ndarray):
+    """ Computes the transition density P^{pi}(x'|x) given a policy pi
+    Parameters
+    ----------
+    P : np.ndarray
+        Numpy matrix containing the transition probabilities for the model
+        The matrix should have dimensions |actions|x|states|x|states|
+    pi : np.ndarray
+        Numpy matrix of dimensions |states|x|actions| containing the
+        policy probabilities
+
+    Returns
+    -------
+    P_pi : np.ndarray
+        Transition matrix
+    """
+    P, _ = sanity_check_probabilities(P, P)
+    na, ns = P.shape[0], P.shape[1]
+    P_pi = np.zeros((ns, ns))
+    for s in range(ns):
+        for y in range(ns):
+            P_pi[y, s] = np.dot(P[:, s, y], pi[s, :])
+    return P_pi

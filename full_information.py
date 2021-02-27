@@ -21,6 +21,29 @@ from utils import sanity_check_probabilities, sanity_check_rewards, \
 eps = 1e-15
 
 
+def full_information_privacy_policies(P0: np.ndarray, P1: np.ndarray,
+                                      pi0: np.ndarray,
+                                      pi1: np.ndarray) -> float:
+    """ Computes 1/I_F(pi_0, pi_1) given pi_0 and pi_1
+    Parameters
+    ----------
+    P0, P1 : np.ndarray
+        Numpy matrices containing the transition probabilities for model M0 and M1
+        Each matrix should have dimensions |actions|x|states|x|states|
+    pi0, pi1 : np.ndarray
+        Numpy matrices of dimensions |states|x|actions| containing the
+        policies pi0 and pi1
+
+    Returns
+    -------
+    1/I_F : float
+        Privacy level
+    """
+    xi0 = compute_stationary_distribution(P0, pi0)
+    xi1 = compute_stationary_distribution(P1, pi1)
+    return full_information_privacy(P0, P1, xi0, xi1)
+
+
 def full_information_privacy(P0: np.ndarray, P1: np.ndarray, xi0: np.ndarray,
                              xi1: np.ndarray) -> float:
     """ Computes 1/I_F(pi_0, pi_1) given xi_0 and xi_1
