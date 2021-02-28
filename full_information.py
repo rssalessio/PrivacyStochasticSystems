@@ -16,7 +16,7 @@ import cvxpy as cp
 import scipy as sp
 import dccp
 from utils import sanity_check_probabilities, sanity_check_rewards, \
-    compute_KL_divergence_models
+    compute_KL_divergence_models, compute_stationary_distribution
 
 eps = 1e-15
 
@@ -150,7 +150,8 @@ def full_information_privacy_utility(rho: float,
                                      initial_points: int = 1,
                                      max_iterations: int = 30,
                                      solver=cp.ECOS,
-                                     debug=False):
+                                     debug: bool = False,
+                                     pi0: np.ndarray = None):
     """ Optimize the privacy-utility value function over the two policies
     in the full information setting
     Parameters
@@ -175,6 +176,9 @@ def full_information_privacy_utility(rho: float,
         Solver used to solve the problem. Default solver is ECOS
     debug : bool, optional
         If true, prints the solver output.
+    pi0 : np.ndarray, optional
+        If a policy pi0 is provided, then we optimize over pi1
+        the problem max_{pi1} V(pi1) - lambda I_F(pi0,pi1).
     Returns
     -------
     I_F : float
@@ -203,6 +207,9 @@ def full_information_privacy_utility(rho: float,
     # Compute KL divergences
     I = compute_KL_divergence_models(P0, P1)
 
+    if pi0 is not None:
+        _xi0, _ = compute_stationary_distribution(P0, pi0)
+
     best_res, best_xi1, best_xi0 = np.inf, None, None
 
     # Loop through initial points and return best result
@@ -213,14 +220,14 @@ def full_information_privacy_utility(rho: float,
         # Construct the problem to find minimum privacy
         gamma = cp.Variable(1)
         xi1 = cp.Variable((ns, na), nonneg=True)
-        xi0 = cp.Variable((ns, na), nonneg=True)
+        xi0 = cp.Variable((ns, na), nonneg=True) if pi0 is None else _xi0
 
-        kl_div_statinary_dis = 0
+        kl_div_stationary_dis = 0
         for s in range(ns):
-            kl_div_statinary_dis += cp.kl_div(
+            kl_div_stationary_dis += cp.kl_div(
                 cp.sum(xi1[s, :]), eps + cp.sum(xi0[s, :])) + cp.sum(
                     xi1[s, :]) - cp.sum(xi0[s, :]) - eps
-        objective = gamma - lmbd * kl_div_statinary_dis
+        objective = gamma - lmbd * kl_div_stationary_dis
 
         # Stationarity constraint
         stationarity_constraint0 = 0
@@ -241,11 +248,11 @@ def full_information_privacy_utility(rho: float,
                     xi1[s, a], eps + xi0[s][a]) + xi1[s, a] - xi0[s][a] - eps)
                 privacy_utility_constraint += -(1 - rho) * xi0[s, a] * R0[s, a]
 
-        constraints = [cp.sum(xi1) == 1, cp.sum(xi0) == 1]
-        constraints += [
-            stationarity_constraint0 == 0, stationarity_constraint1 == 0
-        ]
+        constraints = [cp.sum(xi1) == 1, stationarity_constraint1 == 0]
         constraints += [privacy_utility_constraint <= gamma]
+
+        if pi0 is None:
+            constraints += [cp.sum(xi0) == 1, stationarity_constraint0 == 0]
 
         # Solve problem
         problem = cp.Problem(cp.Minimize(objective), constraints)
@@ -261,7 +268,8 @@ def full_information_privacy_utility(rho: float,
         if result[0] is not None:
             i += 1
             if result[0] < best_res:
-                best_res, best_xi1, best_xi0 = result[0], xi1.value, xi0.value
+                best_res, best_xi1, best_xi0 = result[0], xi1.value, \
+                    xi0.value if pi0 is None else xi0
 
     # Make sure to normalize the results
     best_xi0 += eps
