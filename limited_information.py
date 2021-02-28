@@ -363,7 +363,8 @@ def limited_information_privacy_utility(rho: float,
         if result[0] is not None:
             i += 1
             if result[0] < best_res:
-                best_res, best_xi1, best_xi0 = result[0], xi1.value, xi0.value
+                best_res, best_xi1, best_xi0 = result[0], xi1.value, \
+                    xi0.value if pi0 is None else xi0
 
     # Make sure to normalize the results
     best_xi0 += eps
