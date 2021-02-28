@@ -13,6 +13,7 @@
 
 import numpy as np
 import scipy as sp
+import cvxpy as cp
 
 
 def sanity_check_probabilities(P0: np.ndarray,
@@ -181,3 +182,49 @@ def build_markov_transition_density(P: np.ndarray, pi: np.ndarray):
         for y in range(ns):
             P_pi[y, s] = np.dot(P[:, s, y], pi[s, :])
     return P_pi
+
+
+def compute_best_policy(P: np.ndarray, R: np.ndarray):
+    """ Computes the best policy for a given MDP
+    Parameters
+    ----------
+    P : np.ndarray
+        Numpy matrix containing the transition probabilities for the model
+        The matrix should have dimensions |actions|x|states|x|states|
+    R : np.ndarray
+        Numpy matrix of dimensions |states|x|actions| containing the
+        rewards
+
+    Returns
+    -------
+    xi : np.ndarray
+        Stationary distribution over the states and the actions
+    mu : np.ndarray
+        Stationary distribution over the states
+    pi : np.ndarray
+        The computed policy
+    """
+    P, _ = sanity_check_probabilities(P, P)
+    R, _ = sanity_check_rewards(R, R)
+    na, ns = P.shape[0], P.shape[1]
+
+    xi = cp.Variable((ns, na), nonneg=True)
+
+    # stationarity constraints
+    stationarity_constraint = 0
+    for a in range(na):
+        stationarity_constraint += xi[:, a].T @ (P[a, :, :] - np.eye(ns))
+
+    constraints = [stationarity_constraint == 0, cp.sum(xi) == 1]
+
+    # utility constraints
+    objective = cp.sum(cp.multiply(xi, R))
+
+    # Solve problem
+    problem = cp.Problem(cp.Maximize(objective), constraints)
+    problem.solve()
+
+    xi = xi.value
+    pi = np.array([xi[s, :] / np.sum(xi[s, :]) for s in range(ns)])
+    mu = np.sum(xi, axis=1)
+    return xi, mu, pi

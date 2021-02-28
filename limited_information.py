@@ -328,7 +328,7 @@ def limited_information_privacy_utility(rho: float,
                 P1[a, :, :] - np.eye(ns))
 
         constraints = [
-            tationarity_constraint1 == 0,
+            stationarity_constraint1 == 0,
             cp.sum(xi1) == 1
         ]
 
