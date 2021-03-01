@@ -270,6 +270,7 @@ def limited_information_privacy_utility(rho: float,
     pi0 : np.ndarray, optional
         If a policy pi0 is provided, then we optimize over pi1
         the problem max_{pi1} V(pi1) - lambda I_F(pi0,pi1).
+        In this case rho is set to 1 for simplicity.
     Returns
     -------
     I_L : float
@@ -297,6 +298,7 @@ def limited_information_privacy_utility(rho: float,
 
     if pi0 is not None:
         _xi0, _ = compute_stationary_distribution(P0, pi0)
+        rho = 1
 
     best_res, best_xi1, best_xi0 = np.inf, None, None
 
