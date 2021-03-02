@@ -242,7 +242,8 @@ def limited_information_privacy_utility(rho: float,
                                         initial_points: int = 1,
                                         max_iterations: int = 30,
                                         solver=cp.ECOS,
-                                        debug: bool = False):
+                                        debug: bool = False,
+                                        pi0: np.ndarray = None):
     """ Optimize the privacy-utility value function over the two policies
     in the limited information setting
     Parameters
@@ -329,10 +330,7 @@ def limited_information_privacy_utility(rho: float,
             stationarity_constraint1 += xi1[:, a].T @ (
                 P1[a, :, :] - np.eye(ns))
 
-        constraints = [
-            stationarity_constraint1 == 0,
-            cp.sum(xi1) == 1
-        ]
+        constraints = [stationarity_constraint1 == 0, cp.sum(xi1) == 1]
 
         if pi0 is None:
             constraints += [cp.sum(xi0) == 1, stationarity_constraint0 == 0]
